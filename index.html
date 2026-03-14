@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📁 Google Drive Тест (no-cors)</title>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0f, #1a0b2e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(12, 20, 35, 0.95);
+            border: 3px solid #00ffff;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 0 50px #00ffff;
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00ffff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn {
+            background: linear-gradient(145deg, #00cc88, #00aa66);
+            border: none;
+            border-radius: 40px;
+            padding: 12px 24px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px #00ffff;
+        }
+
+        .btn.danger {
+            background: linear-gradient(145deg, #ff5555, #cc0000);
+        }
+
+        .btn.small {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        #loginContainer {
+            text-align: center;
+            padding: 40px;
+        }
+
+        #userInfo {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-list {
+            list-style: none;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #00ffff;
+            border-radius: 15px;
+            padding: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: white;
+        }
+
+        .status.success {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .status.error {
+            border-color: #ff5555;
+            color: #ff5555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+        }
+
+        input:focus {
+            border-color: #ff66b2;
+            box-shadow: 0 0 20px #ff66b2;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 Google Drive Тест (no-cors)</h1>
+
+        <!-- Экран входа -->
+        <div id="loginContainer">
+            <p style="margin-bottom: 20px; color: #ff66b2;">Для работы необходимо войти в аккаунт Google</p>
+            <div id="g_id_onload"
+                 data-client_id="479159573799-p33s9fqdk7oo95uf7sbpecbsjk0epnvh.apps.googleusercontent.com"
+                 data-context="use"
+                 data-ux_mode="popup"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-theme="filled_blue"
+                 data-size="large"
+                 data-text="sign_in_with"
+                 data-shape="rectangular">
+            </div>
+        </div>
+
+        <!-- Основной интерфейс -->
+        <div id="mainContent" class="hidden">
+            <div id="userInfo">
+                <span>👤 <span id="userEmail"></span></span>
+                <button class="btn small" onclick="logout()">🚪 Выйти</button>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <button class="btn" onclick="getOrCreateFolder()">📁 Создать/получить папку</button>
+                <button class="btn" onclick="createFile()">➕ Создать файл</button>
+                <button class="btn small" onclick="listFiles()">🔄 Обновить список</button>
+            </div>
+
+            <div id="status" class="status">✅ Готов к работе</div>
+            <div id="fileList" class="file-list"></div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn danger" onclick="deleteUserFolder()">🔥 УДАЛИТЬ ВСЮ ПАПКУ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // КОНСТАНТЫ
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzjqXFOSX5In9RHqwfVUO-wrhwAaO3eg0YYpPJcOQUyUfNf08n3FmsRvUD41E5Xb3gP/exec';
+        let currentUser = null;
+
+        // Функция обратного вызова после успешного входа
+        function handleCredentialResponse(response) {
+            const userInfo = JSON.parse(atob(response.credential.split('.')[1]));
+            currentUser = userInfo;
+            
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = userInfo.email;
+            
+            showStatus('✅ Вход выполнен успешно!', 'success');
+            getOrCreateFolder();
+        }
+
+        // Выход из аккаунта
+        function logout() {
+            if (google?.accounts?.id) {
+                google.accounts.id.disableAutoSelect();
+            }
+            currentUser = null;
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+        }
+
+        // Показать статус
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status';
+            if (type === 'success') status.classList.add('success');
+            if (type === 'error') status.classList.add('error');
+        }
+
+        // ПОЛУЧИТЬ/СОЗДАТЬ ПАПКУ
+        async function getOrCreateFolder() {
+            if (!currentUser) return;
+            showStatus('⏳ Создание/получение папки...');
+            try {
+                const response = await fetch(SCRIPT_URL + '?email=' + encodeURIComponent(currentUser.email));
+                const data = await response.json();
+                if (data.success) {
+                    showStatus('✅ Папка готова!', 'success');
+                    listFiles();
+                } else {
+                    showStatus('❌ Ошибка: ' + JSON.stringify(data), 'error');
+                }
+            } catch (e) { 
+                showStatus('❌ Ошибка соединения: ' + e.message, 'error'); 
+            }
+        }
+
+        // ПОЛУЧИТЬ СПИСОК ФАЙЛОВ
+        async function listFiles() {
+            if (!currentUser) return;
+            showStatus('⏳ Загрузка списка файлов...');
+            try {
+                const response = await fetch(SCRIPT_URL + '?email=' + encodeURIComponent(currentUser.email) + '&action=listChats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    
+                    if (data.chats && data.chats.length > 0) {
+                        data.chats.forEach(file => {
+                            const item = document.createElement('div');
+                            item.className = 'file-item';
+                            item.innerHTML = `
+                                <span>📄 ${file.name} <small>${new Date(file.lastModified).toLocaleString()}</small></span>
+                                <button class="btn small" onclick="deleteFile('${file.id}')">❌ Удалить</button>
+                            `;
+                            fileList.appendChild(item);
+                        });
+                        showStatus(`✅ Найдено файлов: ${data.chats.length}`, 'success');
+                    } else {
+                        fileList.innerHTML = '<div style="text-align:center; padding:20px;">📂 Файлов пока нет</div>';
+                        showStatus('✅ Файлов нет', 'success');
+                    }
+                } else {
+                    showStatus('❌ Ошибка: ' + JSON.stringify(data), 'error');
+                }
+            } catch (e) { 
+                showStatus('❌ Ошибка соединения: ' + e.message, 'error'); 
+            }
+        }
+
+        // СОЗДАТЬ ФАЙЛ
+        async function createFile() {
+            if (!currentUser) return;
+            const fileName = 'файл_' + Date.now();
+            showStatus('⏳ Создание файла...');
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        action: 'createChat',
+                        chatName: fileName
+                    })
+                });
+                showStatus('✅ Запрос на создание отправлен', 'success');
+                setTimeout(listFiles, 1000);
+            } catch (e) { 
+                showStatus('❌ Ошибка: ' + e.message, 'error'); 
+            }
+        }
+
+        // УДАЛИТЬ ФАЙЛ
+        async function deleteFile(fileId) {
+            if (!currentUser) return;
+            if (!confirm('🗑️ Удалить файл?')) return;
+            
+            showStatus('⏳ Удаление...');
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        action: 'deleteChat',
+                        fileId: fileId
+                    })
+                });
+                showStatus('✅ Запрос на удаление отправлен', 'success');
+                setTimeout(listFiles, 1000);
+            } catch (e) { 
+                showStatus('❌ Ошибка: ' + e.message, 'error'); 
+            }
+        }
+
+        // УДАЛИТЬ ВСЮ ПАПКУ
+        async function deleteUserFolder() {
+            if (!currentUser) return;
+            if (!confirm('🔥 УДАЛИТЬ ВСЮ ПАПКУ? Это действие необратимо.')) return;
+            
+            const userEmail = currentUser.email;
+            const confirmation = prompt(`⚠️ Введите email ${userEmail} для подтверждения:`);
+            
+            if (confirmation !== userEmail) {
+                showStatus('❌ Удаление отменено', 'error');
+                return;
+            }
+
+            showStatus('⏳ Удаление папки...', 'info');
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({
+                        email: userEmail,
+                        action: 'deleteUserFolder'
+                    })
+                });
+                showStatus('✅ Запрос на удаление папки отправлен', 'success');
+                setTimeout(listFiles, 2000);
+            } catch (e) { 
+                showStatus('❌ Ошибка: ' + e.message, 'error'); 
+            }
+        }
+    </script>
+</body>
+</html>
