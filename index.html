@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест удаления</title>
+    <script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body>
+    <div id="login"></div>
+    <div id="main" style="display:none">
+        <p>👤 <span id="email"></span> <button onclick="logout()">Выйти</button></p>
+        <button onclick="create()">➕ Создать файл</button>
+        <button onclick="list()">📋 Список</button>
+        <div id="files"></div>
+        <pre id="log"></pre>
+    </div>
+
+    <script>
+        const URL = 'https://script.google.com/macros/s/AKfycbzjqXFOSX5In9RHqwfVUO-wrhwAaO3eg0YYpPJcOQUyUfNf08n3FmsRvUD41E5Xb3gP/exec';
+        let user = null;
+
+        google.accounts.id.initialize({
+            client_id: '479159573799-p33s9fqdk7oo95uf7sbpecbsjk0epnvh.apps.googleusercontent.com',
+            callback: (r) => {
+                user = JSON.parse(atob(r.credential.split('.')[1]));
+                document.getElementById('email').textContent = user.email;
+                document.getElementById('login').innerHTML = '';
+                document.getElementById('main').style.display = 'block';
+            }
+        });
+        document.getElementById('login').innerHTML = '<button onclick="google.accounts.id.prompt()">Войти</button>';
+
+        function logout() {
+            google.accounts.id.disableAutoSelect();
+            document.getElementById('main').style.display = 'none';
+            document.getElementById('login').innerHTML = '<button onclick="google.accounts.id.prompt()">Войти</button>';
+        }
+
+        async function create() {
+            await fetch(URL, {
+                method: 'POST',
+                body: JSON.stringify({email: user.email, action: 'createChat'})
+            });
+            list();
+        }
+
+        async function list() {
+            const r = await fetch(URL + '?email=' + user.email + '&action=listChats');
+            const data = await r.json();
+            let html = '<h3>Файлы:</h3>';
+            data.chats.forEach(f => {
+                html += `<div>📄 ${f.name} <button onclick="del('${f.id}')">❌</button> ID: ${f.id}</div>`;
+            });
+            document.getElementById('files').innerHTML = html;
+        }
+
+        async function del(id) {
+            document.getElementById('log').textContent = 'Удаляем ID: ' + id;
+            const r = await fetch(URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: user.email,
+                    action: 'deleteChat',
+                    fileId: id
+                })
+            });
+            const result = await r.json();
+            document.getElementById('log').textContent = JSON.stringify(result);
+            if (result.success) list();
+        }
+    </script>
+</body>
+</html>
