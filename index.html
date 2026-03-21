@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>E-Genius AI Prime • Тест Google Auth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Контейнер */
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* Карточка авторизации */
+        .auth-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 40px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: white;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* Кнопка Google */
+        .google-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .google-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .google-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Разделитель */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            margin: 20px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .divider::before {
+            margin-right: 10px;
+        }
+
+        .divider::after {
+            margin-left: 10px;
+        }
+
+        /* Поле для ручного ввода */
+        .manual-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 15px;
+            outline: none;
+            text-align: center;
+        }
+
+        .manual-input:focus {
+            border-color: #ffd966;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .manual-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ffd966, #ff9966);
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e1e2f;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 153, 102, 0.4);
+        }
+
+        /* Список тестовых пользователей */
+        .test-users {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .test-title {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .user-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 15px;
+            border-radius: 30px;
+            margin: 4px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-badge:hover {
+            background: rgba(255, 217, 102, 0.5);
+            transform: scale(1.05);
+        }
+
+        /* Статус и сообщения */
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(68, 255, 68, 0.2);
+            border: 1px solid #44ff44;
+            color: #88ff88;
+            display: block;
+        }
+
+        .status.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff8888;
+            display: block;
+        }
+
+        .status.info {
+            background: rgba(255, 217, 102, 0.2);
+            border: 1px solid #ffd966;
+            color: #ffd966;
+            display: block;
+        }
+
+        /* Профиль после входа */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 40px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+            display: none;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #ffd966, #ff9966);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .profile-name {
+            font-size: 24px;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .profile-email {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+
+        .profile-id {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 25px;
+            font-family: monospace;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 40px;
+            padding: 12px 25px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Загрузка */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Карточка авторизации -->
+        <div id="authCard" class="auth-card">
+            <div class="logo">⚡</div>
+            <h1>E-Genius AI Prime</h1>
+            <div class="subtitle">Вход в систему</div>
+
+            <!-- Кнопка Google -->
+            <button class="google-btn" id="googleLoginBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Войти через Google
+            </button>
+
+            <div class="divider">или</div>
+
+            <!-- Ручной ввод -->
+            <input type="text" id="manualLogin" class="manual-input" placeholder="Введите логин (ermak, 45554, Курица)">
+            <button class="login-btn" id="manualLoginBtn">Войти</button>
+
+            <!-- Тестовые пользователи -->
+            <div class="test-users">
+                <div class="test-title">📋 Тестовые аккаунты:</div>
+                <div>
+                    <span class="user-badge" onclick="setTestUser('ermak')">ermak</span>
+                    <span class="user-badge" onclick="setTestUser('45554')">45554</span>
+                    <span class="user-badge" onclick="setTestUser('Курица')">Курица</span>
+                </div>
+            </div>
+
+            <div id="statusMessage" class="status"></div>
+        </div>
+
+        <!-- Карточка профиля (после входа) -->
+        <div id="profileCard" class="profile-card">
+            <div class="profile-avatar" id="profileAvatar">👤</div>
+            <div class="profile-name" id="profileName">Имя пользователя</div>
+            <div class="profile-email" id="profileEmail">email@example.com</div>
+            <div class="profile-id" id="profileId">ID: ---</div>
+            <div style="margin-bottom: 20px; padding: 10px; background: rgba(255,217,102,0.2); border-radius: 20px;">
+                <span style="color: #ffd966;">🔑 Ключ API:</span>
+                <span id="apiKeyDisplay" style="color: white; font-family: monospace; font-size: 11px; display: block; margin-top: 5px; word-break: break-all;">---</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Выйти</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Google OAuth 2.0 Конфигурация (из твоего файла)
+        // ============================================
+        const GOOGLE_CLIENT_ID = '479159573799-p33s9fqdk7oo95uf7sbpecbsjk0epnvh.apps.googleusercontent.com';
+        const REDIRECT_URI = window.location.origin + window.location.pathname;
+        const SCOPE = 'email profile openid';
+        
+        // База пользователей с ключами
+        const USERS_DB = {
+            'ermak': {
+                name: 'Ermak Artekovec',
+                avatar: '👑',
+                apiKey: 'sk-or-v1-ermak-private-key',
+                role: 'admin'
+            },
+            '45554': {
+                name: 'Пользователь 45554',
+                avatar: '👤',
+                apiKey: 'sk-or-v1-45554-user-key',
+                role: 'user'
+            },
+            'Курица': {
+                name: 'Курица',
+                avatar: '🐔',
+                apiKey: 'sk-or-v1-kurica-special-key',
+                role: 'user'
+            }
+        };
+
+        // Ключ по умолчанию для Google пользователей
+        const DEFAULT_API_KEY = 'sk-or-v1-default-key-for-google-users';
+
+        // Текущий пользователь
+        let currentUser = null;
+
+        // ============================================
+        // Инициализация
+        // ============================================
+        window.onload = function() {
+            // Проверяем, есть ли токен в URL (возврат от Google)
+            const urlParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = urlParams.get('access_token');
+            
+            if (accessToken) {
+                // Получаем данные пользователя по токену
+                fetchUserInfo(accessToken);
+            } else {
+                // Проверяем сохранённую сессию
+                checkSavedSession();
+            }
+            
+            // Навешиваем обработчики
+            document.getElementById('googleLoginBtn').onclick = googleLogin;
+            document.getElementById('manualLoginBtn').onclick = manualLogin;
+            document.getElementById('logoutBtn').onclick = logout;
+        };
+
+        // ============================================
+        // Google OAuth Login
+        // ============================================
+        function googleLogin() {
+            showStatus('info', '🔄 Перенаправление на Google...');
+            
+            // Строим URL для OAuth 2.0
+            const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + 
+                'client_id=' + encodeURIComponent(GOOGLE_CLIENT_ID) +
+                '&redirect_uri=' + encodeURIComponent(REDIRECT_URI) +
+                '&response_type=token' +
+                '&scope=' + encodeURIComponent(SCOPE) +
+                '&prompt=consent';
+            
+            // Перенаправляем на Google
+            window.location.href = authUrl;
+        }
+
+        // ============================================
+        // Получение информации о пользователе Google
+        // ============================================
+        async function fetchUserInfo(accessToken) {
+            showStatus('info', '🔄 Получение данных пользователя...');
+            
+            try {
+                const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                
+                const userData = await response.json();
+                
+                if (userData && userData.email) {
+                    // Успешная авторизация через Google
+                    currentUser = {
+                        type: 'google',
+                        id: userData.id,
+                        name: userData.name,
+                        email: userData.email,
+                        avatar: userData.picture || '🌐',
+                        apiKey: DEFAULT_API_KEY
+                    };
+                    
+                    saveSession();
+                    showProfile();
+                    showStatus('success', '✅ Добро пожаловать, ' + userData.name + '!');
+                    
+                    // Очищаем URL от токена
+                    window.location.hash = '';
+                } else {
+                    throw new Error('Не удалось получить данные');
+                }
+            } catch (error) {
+                console.error('Google auth error:', error);
+                showStatus('error', '❌ Ошибка авторизации через Google');
+                document.getElementById('authCard').style.display = 'block';
+                document.getElementById('profileCard').style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // Ручной вход по логину
+        // ============================================
+        function manualLogin() {
+            const username = document.getElementById('manualLogin').value.trim().toLowerCase();
+            
+            if (!username) {
+                showStatus('error', '❌ Введите логин');
+                return;
+            }
+            
+            if (USERS_DB[username]) {
+                currentUser = {
+                    type: 'manual',
+                    id: username,
+                    name: USERS_DB[username].name,
+                    email: username + '@e-genius.local',
+                    avatar: USERS_DB[username].avatar,
+                    apiKey: USERS_DB[username].apiKey,
+                    role: USERS_DB[username].role
+                };
+                
+                saveSession();
+                showProfile();
+                showStatus('success', `✅ Добро пожаловать, ${USERS_DB[username].name}!`);
+            } else {
+                showStatus('error', '❌ Пользователь не найден. Доступные: ermak, 45554, Курица');
+            }
+        }
+
+        // ============================================
+        // Установка тестового пользователя
+        // ============================================
+        function setTestUser(username) {
+            document.getElementById('manualLogin').value = username;
+            manualLogin();
+        }
+
+        // ============================================
+        // Сохранение сессии
+        // ============================================
+        function saveSession() {
+            if (currentUser) {
+                localStorage.setItem('eGeniusUser', JSON.stringify(currentUser));
+            }
+        }
+
+        // ============================================
+        // Проверка сохранённой сессии
+        // ============================================
+        function checkSavedSession() {
+            const saved = localStorage.getItem('eGeniusUser');
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                    showProfile();
+                } catch (e) {
+                    console.error('Session error:', e);
+                }
+            }
+        }
+
+        // ============================================
+        // Показать профиль
+        // ============================================
+        function showProfile() {
+            if (!currentUser) return;
+            
+            document.getElementById('authCard').style.display = 'none';
+            document.getElementById('profileCard').style.display = 'block';
+            
+            // Заполняем данные профиля
+            document.getElementById('profileAvatar').textContent = currentUser.avatar;
+            document.getElementById('profileName').textContent = currentUser.name;
+            document.getElementById('profileEmail').textContent = currentUser.email || '—';
+            document.getElementById('profileId').textContent = `ID: ${currentUser.id} | Тип: ${currentUser.type === 'google' ? 'Google Account' : 'Local Account'}`;
+            document.getElementById('apiKeyDisplay').textContent = currentUser.apiKey || '—';
+            
+            // Показываем ключ в красивом виде
+            if (currentUser.apiKey) {
+                const shortKey = currentUser.apiKey.length > 40 ? 
+                    currentUser.apiKey.substring(0, 20) + '...' + currentUser.apiKey.substring(currentUser.apiKey.length - 15) : 
+                    currentUser.apiKey;
+                document.getElementById('apiKeyDisplay').innerHTML = `<span style="color: #ffd966;">${shortKey}</span>`;
+            }
+            
+            // Анимация приветствия
+            playGreeting();
+        }
+
+        // ============================================
+        // Выход из системы
+        // ============================================
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('eGeniusUser');
+            
+            document.getElementById('authCard').style.display = 'block';
+            document.getElementById('profileCard').style.display = 'none';
+            document.getElementById('manualLogin').value = '';
+            
+            showStatus('success', '✅ Вы вышли из системы');
+        }
+
+        // ============================================
+        // Показать статус
+        // ============================================
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = 'status ' + type;
+            statusDiv.innerHTML = message;
+            
+            setTimeout(() => {
+                if (statusDiv.className.includes(type)) {
+                    statusDiv.style.display = 'none';
+                    statusDiv.className = 'status';
+                }
+            }, 3000);
+        }
+
+        // ============================================
+        // Приветствие (голосовое)
+        // ============================================
+        function playGreeting() {
+            if (!currentUser) return;
+            
+            const greeting = new SpeechSynthesisUtterance();
+            greeting.text = `Добро пожаловать в E-Genius AI Prime, ${currentUser.name}. Система готова к работе.`;
+            greeting.lang = 'ru-RU';
+            greeting.rate = 0.9;
+            
+            // Небольшая задержка для плавности
+            setTimeout(() => {
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(greeting);
+            }, 500);
+        }
+
+        // ============================================
+        // Дополнительно: обработка ошибок Google
+        // ============================================
+        if (window.location.hash.includes('error')) {
+            showStatus('error', '❌ Ошибка авторизации Google. Попробуйте снова.');
+            window.location.hash = '';
+        }
+    </script>
+</body>
+</html>
